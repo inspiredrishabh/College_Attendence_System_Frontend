@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaDownload, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
-
+//setTotalAttendance(
 const Teacher = () => {
   const [formData, setFormData] = useState({
     subject: "",
