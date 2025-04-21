@@ -4,13 +4,13 @@ A modern web application for managing student attendance in educational institut
 
 ## 📚 Features
 
-- User-friendly dashboard for administrators, faculty, and students
-- Real-time attendance tracking and reporting
-- Subject-wise and date-wise attendance records
-- Automated attendance reports and analytics
-- Student attendance percentage calculator
-- Mobile-responsive design for attendance marking on any device
-- Role-based access control
+- **Authentication System**: Secure login for students and faculty.
+- **Faculty Dashboard**: Faculty interface to start attendance sessions and monitor student participation
+- **Student Portal**: Easy attendance submission and history tracking for students
+- **Attendance Analytics**: Visual representation of attendance patterns and statistics
+- **Export Functionality**: Download attendance records in CSV format for further processing
+- **Responsive Design**: Works seamlessly across desktops, tablets, and mobile devices
+- **Real-time Updates**: Instant reflection of attendance status after submission
 
 ## 🛠️ Technologies Used
 
