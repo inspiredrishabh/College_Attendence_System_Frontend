@@ -6,18 +6,22 @@ import {
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
-const Attendence = ({
-  accuracyData = {
-    locationMatch: 90,
-    timeStatus: "On Time",
-    overallStatus: "Verified",
-  },
-}) => {
+const Attendence = () => {
   const [formData, setFormData] = useState({
     attendanceCode: "",
     studentName: "",
     studentId: "",
   });
+
+  const [accuracyData, setAccuracyData] = useState({
+    locationMatch: 0,
+    timeStatus: "Pending",
+    overallStatus: "Pending",
+    message: "",
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,8 +33,124 @@ const Attendence = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Submitting attendance data:", formData);
-    // Here you would send the data to the backend
+
+    // Reset previous states
+    setError(null);
+    setIsLoading(true);
+
+    // Validate form data
+    if (
+      !formData.attendanceCode ||
+      !formData.studentName ||
+      !formData.studentId
+    ) {
+      setError("Please fill in all fields");
+      setIsLoading(false);
+      return;
+    }
+
+    // Get geolocation data
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const long = position.coords.longitude;
+          markAttendance(lat, long);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          setError(
+            "Could not access your location. Please enable location services."
+          );
+          setIsLoading(false);
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by this browser.");
+      setIsLoading(false);
+    }
+  };
+
+  const markAttendance = async (lat, long) => {
+    try {
+      // Prepare data for API
+      const attendanceData = {
+        lat: lat.toString(),
+        long: long.toString(),
+        attendanceCode: formData.attendanceCode,
+        studentName: formData.studentName,
+        studentId: formData.studentId,
+      };
+
+      // Make API call
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}${
+          import.meta.env.VITE_API_MARK_ATTENDANCE
+        }`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(attendanceData),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Success case
+        setAccuracyData({
+          locationMatch: 100,
+          timeStatus: "On Time",
+          overallStatus: "Verified",
+          message: data.message || "Attendance marked successfully!",
+        });
+      } else {
+        // Handle specific error cases
+        if (data.message.includes("not in the attendance range")) {
+          setAccuracyData({
+            locationMatch: 30, // Low match percentage for out of range
+            timeStatus: "On Time",
+            overallStatus: "Not Verified",
+            message: "You're too far from the attendance location.",
+          });
+          setError(
+            "Location verification failed: You're not within the acceptable range."
+          );
+        } else if (data.message.includes("invalid")) {
+          setAccuracyData({
+            locationMatch: 0,
+            timeStatus: "Failed",
+            overallStatus: "Not Verified",
+            message: "The attendance code you entered is incorrect.",
+          });
+          setError("Attendance code is invalid. Please check and try again.");
+        } else {
+          // Generic error
+          setAccuracyData({
+            locationMatch: 0,
+            timeStatus: "Failed",
+            overallStatus: "Not Verified",
+            message: data.message || "Attendance verification failed.",
+          });
+          setError(
+            data.message || "Failed to mark attendance. Please try again."
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error marking attendance:", error);
+      setError("Network error. Please check your connection and try again.");
+      setAccuracyData({
+        locationMatch: 0,
+        timeStatus: "Error",
+        overallStatus: "Not Verified",
+        message: "System could not process your request.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,6 +171,12 @@ const Attendence = ({
               <h2 className="text-2xl sm:text-3xl font-bold mb-5 text-center">
                 Mark Your Attendance
               </h2>
+
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  {error}
+                </div>
+              )}
 
               <form
                 onSubmit={handleSubmit}
@@ -115,9 +241,20 @@ const Attendence = ({
 
                 <button
                   type="submit"
-                  className="mt-4 flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white py-2 sm:py-3 px-6 sm:px-10 rounded-lg font-medium transition-all text-base sm:text-lg"
+                  disabled={isLoading}
+                  className={`mt-4 flex items-center justify-center ${
+                    isLoading
+                      ? "bg-amber-400"
+                      : "bg-amber-600 hover:bg-amber-700"
+                  } text-white py-2 sm:py-3 px-6 sm:px-10 rounded-lg font-medium transition-all text-base sm:text-lg`}
                 >
-                  <FaUserCheck className="mr-2" /> Mark Attendance
+                  {isLoading ? (
+                    "Processing..."
+                  ) : (
+                    <>
+                      <FaUserCheck className="mr-2" /> Mark Attendance
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -162,6 +299,8 @@ const Attendence = ({
                       className={`font-bold ${
                         accuracyData.timeStatus === "On Time"
                           ? "text-green-600"
+                          : accuracyData.timeStatus === "Pending"
+                          ? "text-gray-600"
                           : "text-amber-600"
                       }`}
                     >
@@ -169,9 +308,12 @@ const Attendence = ({
                     </span>
                   </div>
                   <div className="w-full p-2 bg-gray-100 rounded-lg text-center">
-                    {accuracyData.timeStatus === "On Time"
-                      ? "You're marking attendance within the allowed window"
-                      : "You're marking attendance after the deadline"}
+                    {accuracyData.message ||
+                      (accuracyData.timeStatus === "Pending"
+                        ? "Mark your attendance to see verification status"
+                        : accuracyData.timeStatus === "On Time"
+                        ? "You're marking attendance within the allowed window"
+                        : "There was an issue with your attendance submission")}
                   </div>
                 </div>
 
@@ -181,6 +323,12 @@ const Attendence = ({
                     <div className="flex items-center text-green-600">
                       <FaCheckCircle className="text-2xl mr-2" />
                       <span className="font-bold text-xl">Verified</span>
+                    </div>
+                  ) : accuracyData.overallStatus === "Pending" ? (
+                    <div className="flex items-center text-gray-600">
+                      <span className="font-bold text-xl">
+                        Awaiting Submission
+                      </span>
                     </div>
                   ) : (
                     <div className="flex items-center text-red-600">

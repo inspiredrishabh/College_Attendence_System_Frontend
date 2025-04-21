@@ -5,22 +5,14 @@ import Attendence from "./components/Attendence";
 import Teacher from "./components/Teacher";
 
 const App = () => {
-  const attendanceData = {
-    accuracyData: {
-      locationMatch: 98,
-      timeStatus: "On Time",
-      overallStatus: "Verified",
-    },
-  };
+  // Environment variables for API endpoints are now loaded from .env file
+  // Access them using import.meta.env.VITE_API_*
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route
-          path="/attendance"
-          element={<Attendence {...attendanceData} />}
-        />
+        <Route path="/attendance" element={<Attendence />} />
         <Route path="/teacher" element={<Teacher />} />
       </Routes>
     </BrowserRouter>

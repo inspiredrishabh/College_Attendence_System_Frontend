@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaDownload, FaMapMarkerAlt, FaUsers } from "react-icons/fa";
-//setTotalAttendance(
+
 const Teacher = () => {
   const [formData, setFormData] = useState({
     subject: "",
@@ -8,6 +8,48 @@ const Teacher = () => {
     attendanceCode: "",
   });
   const [totalAttendance, setTotalAttendance] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch attendance count on component mount
+  useEffect(() => {
+    getAttendanceCount();
+  }, []);
+
+  // For getting count of attendances
+  const getAttendanceCount = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}${
+          import.meta.env.VITE_API_VERIFIED_COUNT
+        }`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch attendance count");
+      }
+
+      const data = await response.json();
+      console.log(`Total attendances: ${data.count}`);
+      setTotalAttendance(data.count);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  // For downloading CSV
+  const downloadAttendanceCSV = () => {
+    try {
+      // This will trigger a file download in the browser
+      window.open(
+        `${import.meta.env.VITE_API_BASE_URL}${
+          import.meta.env.VITE_API_EXPORT_CSV
+        }`,
+        "_blank"
+      );
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+    }
+  };
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -20,19 +62,80 @@ const Teacher = () => {
 
   // Handle geolocation marking
   const handleMarkGeolocation = () => {
+    // Validate required fields
+    if (!formData.subject || !formData.batch) {
+      alert("Please enter both subject and batch before marking location");
+      return;
+    }
+
+    setIsLoading(true);
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          alert(
-            `Location marked! Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}`
-          );
+          // Get the coordinates
+          const lat = position.coords.latitude;
+          const long = position.coords.longitude;
+
+          // Start the attendance session with API call
+          startAttendanceSession(lat, long);
         },
         (error) => {
+          setIsLoading(false);
           alert(`Error accessing location: ${error.message}`);
         }
       );
     } else {
+      setIsLoading(false);
       alert("Geolocation is not supported by this browser.");
+    }
+  };
+
+  // Function to start attendance session via API
+  const startAttendanceSession = async (lat, long) => {
+    try {
+      // Prepare data for API call
+      const requestData = {
+        batch: formData.batch,
+        subject: formData.subject,
+        lat: lat.toString(),
+        long: long.toString(),
+      };
+
+      // Make API call to your backend - replace URL with your actual endpoint
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}${
+          import.meta.env.VITE_API_START_ATTENDANCE
+        }`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update attendance code in the form
+        setFormData((prev) => ({
+          ...prev,
+          attendanceCode: data.attendanceCode,
+        }));
+
+        alert(`Attendance started successfully! Code: ${data.attendanceCode}`);
+
+        // Refresh attendance count after starting a session
+        getAttendanceCount();
+      } else {
+        alert(`Failed to start attendance: ${data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      alert(`Error starting attendance: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -100,6 +203,7 @@ const Teacher = () => {
                       value={formData.attendanceCode}
                       onChange={handleChange}
                       placeholder="Enter or generate code"
+                      readOnly
                       className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                     />
                   </div>
@@ -108,9 +212,20 @@ const Teacher = () => {
                 <div className="mt-auto pt-6">
                   <button
                     onClick={handleMarkGeolocation}
-                    className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium transition-all text-lg"
+                    disabled={isLoading}
+                    className={`w-full flex items-center justify-center ${
+                      isLoading
+                        ? "bg-blue-400"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    } text-white py-3 px-6 rounded-lg font-medium transition-all text-lg`}
                   >
-                    <FaMapMarkerAlt className="mr-2" /> MARK GEOLOCATION
+                    {isLoading ? (
+                      "Processing..."
+                    ) : (
+                      <>
+                        <FaMapMarkerAlt className="mr-2" /> MARK GEOLOCATION
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -137,7 +252,10 @@ const Teacher = () => {
                 </div>
 
                 <div className="mt-auto pt-6">
-                  <button className="w-full flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white py-3 px-6 rounded-lg font-medium transition-all text-lg">
+                  <button
+                    onClick={downloadAttendanceCSV}
+                    className="w-full flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white py-3 px-6 rounded-lg font-medium transition-all text-lg"
+                  >
                     <FaDownload className="mr-2" /> DOWNLOAD SHEET
                   </button>
                 </div>
