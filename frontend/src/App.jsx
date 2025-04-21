@@ -5,11 +5,22 @@ import Attendence from "./components/Attendence";
 import Teacher from "./components/Teacher";
 
 const App = () => {
+  const attendanceData = {
+    accuracyData: {
+      locationMatch: 98,
+      timeStatus: "On Time",
+      overallStatus: "Verified",
+    },
+  };
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/attendance" element={<Attendence />} />
+        <Route
+          path="/attendance"
+          element={<Attendence {...attendanceData} />}
+        />
         <Route path="/teacher" element={<Teacher />} />
       </Routes>
     </BrowserRouter>
