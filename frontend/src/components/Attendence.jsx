@@ -84,9 +84,7 @@ const Attendence = () => {
 
       // Make API call
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}${
-          import.meta.env.VITE_API_MARK_ATTENDANCE
-        }`,
+        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_MARK}`,
         {
           method: "POST",
           headers: {

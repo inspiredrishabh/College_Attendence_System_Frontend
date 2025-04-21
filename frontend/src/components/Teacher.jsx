@@ -19,9 +19,7 @@ const Teacher = () => {
   const getAttendanceCount = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}${
-          import.meta.env.VITE_API_VERIFIED_COUNT
-        }`
+        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_COUNT}`
       );
 
       if (!response.ok) {
@@ -41,9 +39,7 @@ const Teacher = () => {
     try {
       // This will trigger a file download in the browser
       window.open(
-        `${import.meta.env.VITE_API_BASE_URL}${
-          import.meta.env.VITE_API_EXPORT_CSV
-        }`,
+        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_CSV}`,
         "_blank"
       );
     } catch (error) {
@@ -104,9 +100,7 @@ const Teacher = () => {
 
       // Make API call to your backend - replace URL with your actual endpoint
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}${
-          import.meta.env.VITE_API_START_ATTENDANCE
-        }`,
+        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_START}`,
         {
           method: "POST",
           headers: {
