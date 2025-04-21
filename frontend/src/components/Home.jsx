@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   FaUserGraduate,
   FaChalkboardTeacher,
@@ -28,9 +29,11 @@ const Home = () => {
               <h2 className="text-2xl sm:text-3xl font-bold mb-5 sm:mb-8">
                 Are you a Student?
               </h2>
-              <button className="flex items-center bg-amber-600 hover:bg-amber-700 text-white py-2 sm:py-3 px-6 sm:px-10 rounded-lg font-medium transition-all text-base sm:text-lg">
-                Sign In <FaArrowRight className="ml-2" />
-              </button>
+              <Link to="/attendance">
+                <button className="flex items-center bg-amber-600 hover:bg-amber-700 text-white py-2 sm:py-3 px-6 sm:px-10 rounded-lg font-medium transition-all text-base sm:text-lg">
+                  Sign In <FaArrowRight className="ml-2" />
+                </button>
+              </Link>
             </div>
           </div>
 
@@ -41,9 +44,11 @@ const Home = () => {
               <h2 className="text-2xl sm:text-3xl font-bold mb-5 sm:mb-8">
                 Are you a Teacher?
               </h2>
-              <button className="flex items-center bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 px-6 sm:px-10 rounded-lg font-medium transition-all text-base sm:text-lg">
-                Sign In <FaArrowRight className="ml-2" />
-              </button>
+              <Link to="/teacher">
+                <button className="flex items-center bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 px-6 sm:px-10 rounded-lg font-medium transition-all text-base sm:text-lg">
+                  Sign In <FaArrowRight className="ml-2" />
+                </button>
+              </Link>
             </div>
           </div>
         </div>
