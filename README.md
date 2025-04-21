@@ -4,7 +4,7 @@ A modern web application for managing student attendance in educational institut
 
 ## 📚 Features
 
-- **Authentication System**: Secure login for students and faculty.
+- **Authentication System**: Secure for students and faculty.
 - **Faculty Dashboard**: Faculty interface to start attendance sessions and monitor student participation
 - **Student Portal**: Easy attendance submission and history tracking for students
 - **Attendance Analytics**: Visual representation of attendance patterns and statistics
@@ -65,7 +65,3 @@ We welcome contributions to enhance the system:
 4. Commit your changes (`git commit -m 'Add some feature'`)
 5. Push to the branch (`git push origin feature/improvement`)
 6. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
