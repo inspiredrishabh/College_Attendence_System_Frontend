@@ -5,8 +5,7 @@ import Attendence from "./components/Attendence";
 import Teacher from "./components/Teacher";
 
 const App = () => {
-  // Environment variables for API endpoints are now loaded from .env file
-  // Access them using import.meta.env.VITE_API_*
+  
 
   return (
     <BrowserRouter>
