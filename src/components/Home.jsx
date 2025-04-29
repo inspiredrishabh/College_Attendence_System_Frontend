@@ -56,7 +56,7 @@ const Home = () => {
 
       {/* Footer */}
       <footer className="py-6 text-center text-gray-400 bg-gray-900 w-full">
-        <p>Made with ♥ by Team : Awadh</p>
+        <p>Made with ♥ by RPS</p>
       </footer>
     </div>
   );

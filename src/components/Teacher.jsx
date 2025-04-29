@@ -7,19 +7,36 @@ const Teacher = () => {
     batch: "",
     attendanceCode: "",
   });
-  const [totalAttendance, setTotalAttendance] = useState(0);
+  const [totalAttendance, setTotalAttendance] = useState(null); // Set to null initially instead of 0
   const [isLoading, setIsLoading] = useState(false);
+  const [isCSVLoading, setIsCSVLoading] = useState(false);
 
-  // Fetch attendance count on component mount
+  // Setup polling for attendance count updates
   useEffect(() => {
-    getAttendanceCount();
-  }, []);
+    getAttendanceCount()
+    const intervalId = setInterval(() => {
+      if (formData.attendanceCode) {
+        getAttendanceCount();
+      }
+    }, 2000);
+    return () => clearInterval(intervalId);
+  }, [formData.attendanceCode]);
 
-  // For getting count of attendances
   const getAttendanceCount = async () => {
+    
+    if (!formData.attendanceCode) {
+      setTotalAttendance(null); // Display N/A
+      return;
+    }
+
     try {
+      // Include the attendance code as a query parameter
+      const queryParam = `?code=${formData.attendanceCode}`;
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_COUNT}`
+        `${import.meta.env.VITE_API_URL}${
+          import.meta.env.VITE_API_COUNT
+        }${queryParam}`
       );
 
       if (!response.ok) {
@@ -27,7 +44,9 @@ const Teacher = () => {
       }
 
       const data = await response.json();
-      console.log(`Total attendances: ${data.count}`);
+      console.log(
+        `Total attendances for code ${formData.attendanceCode}: ${data.count}`
+      );
       setTotalAttendance(data.count);
     } catch (error) {
       console.error("Error:", error);
@@ -36,18 +55,33 @@ const Teacher = () => {
 
   // For downloading CSV
   const downloadAttendanceCSV = () => {
-    try {
-      // This will trigger a file download in the browser
-      window.open(
-        `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_CSV}`,
-        "_blank"
+    if (!formData.attendanceCode) {
+      alert(
+        "Please generate an attendance code first before downloading data."
       );
+      return;
+    }
+
+    try {
+      setIsCSVLoading(true);
+
+      // Modified URL with code parameter
+      const downloadUrl = `${import.meta.env.VITE_API_URL}${
+        import.meta.env.VITE_API_CSV
+      }?code=${formData.attendanceCode}`;
+
+      window.open(downloadUrl, "_blank");
     } catch (error) {
       console.error("Error downloading CSV:", error);
+      alert("Failed to download attendance data. Please try again.");
+    } finally {
+      // Set loading state back to false after a short delay
+      setTimeout(() => {
+        setIsCSVLoading(false);
+      }, 1000);
     }
   };
 
-  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevState) => ({
@@ -56,9 +90,8 @@ const Teacher = () => {
     }));
   };
 
-  // Handle geolocation marking
   const handleMarkGeolocation = () => {
-    // Validate required fields
+    
     if (!formData.subject || !formData.batch) {
       alert("Please enter both subject and batch before marking location");
       return;
@@ -90,15 +123,12 @@ const Teacher = () => {
   // Function to start attendance session via API
   const startAttendanceSession = async (lat, long) => {
     try {
-      // Prepare data for API call
       const requestData = {
         batch: formData.batch,
         subject: formData.subject,
         lat: lat.toString(),
         long: long.toString(),
       };
-
-      // Make API call to your backend - replace URL with your actual endpoint
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}${import.meta.env.VITE_API_START}`,
         {
@@ -121,9 +151,10 @@ const Teacher = () => {
 
         alert(`Attendance started successfully! Code: ${data.attendanceCode}`);
 
-        // Refresh attendance count after starting a session
         getAttendanceCount();
-      } else {
+      }
+
+      else {
         alert(`Failed to start attendance: ${data.message || "Unknown error"}`);
       }
     } catch (error) {
@@ -239,7 +270,7 @@ const Teacher = () => {
                         </span>
                       </div>
                       <span className="text-2xl font-bold text-amber-600 p-3">
-                        {totalAttendance}
+                        {totalAttendance === null ? "N/A" : totalAttendance}
                       </span>
                     </div>
                   </div>
@@ -248,9 +279,20 @@ const Teacher = () => {
                 <div className="mt-auto pt-6">
                   <button
                     onClick={downloadAttendanceCSV}
-                    className="w-full flex items-center justify-center bg-amber-600 hover:bg-amber-700 text-white py-3 px-6 rounded-lg font-medium transition-all text-lg"
+                    disabled={isCSVLoading}
+                    className={`w-full flex items-center justify-center ${
+                      isCSVLoading
+                        ? "bg-amber-400"
+                        : "bg-amber-600 hover:bg-amber-700"
+                    } text-white py-3 px-6 rounded-lg font-medium transition-all text-lg`}
                   >
-                    <FaDownload className="mr-2" /> DOWNLOAD SHEET
+                    {isCSVLoading ? (
+                      "Downloading..."
+                    ) : (
+                      <>
+                        <FaDownload className="mr-2" /> DOWNLOAD SHEET
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -260,7 +302,7 @@ const Teacher = () => {
 
         {/* Footer */}
         <footer className="py-6 text-center text-gray-400 bg-gray-900 w-full">
-          <p>Made with ♥ by Team : Awadh</p>
+          <p>Made with ♥ by RPS</p>
         </footer>
       </div>
     </>
